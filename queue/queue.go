@@ -7,11 +7,15 @@ import (
 )
 
 type Job struct {
-	handler func()
+	handler func(...interface{})
+	args    []interface{}
 }
 
-func NewJob(handler func()) Job {
-	return Job{handler: handler}
+func NewJob(handler func(...interface{}), args ...interface{}) Job {
+	return Job{
+		handler: handler,
+		args:    args,
+	}
 }
 
 type Queue struct {
@@ -72,7 +76,7 @@ func (q *Queue) Start() {
 				q.wg.Add(1)
 				go func(job Job) {
 					fmt.Printf("start %v\n", w)
-					job.handler()
+					job.handler(job.args...)
 					fmt.Printf("end   %v\n", w)
 					q.waiting <- w
 					q.wg.Done()

@@ -14,11 +14,11 @@ func main() {
 	q := queue.NewQueue(ctx, 10)
 
 	for i := 0; i < 100; i++ {
-		j := queue.NewJob(func() {
+		j := queue.NewJob(func(args ...interface{}) {
 			r := rand.Intn(1000)
 			time.Sleep(time.Duration(r) * time.Millisecond)
-			fmt.Println(r)
-		})
+			fmt.Println(r, args)
+		}, i)
 		q.Add(j)
 	}
 
