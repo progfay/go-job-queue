@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -10,11 +9,12 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
-	q := queue.NewQueue(ctx, 10)
+	q := queue.NewQueue(10)
+	defer q.Stop()
 
 	for i := 0; i < 100; i++ {
 		j := queue.NewJob(func(args ...interface{}) {
+			fmt.Println("start", args)
 			r := rand.Intn(1000)
 			time.Sleep(time.Duration(r) * time.Millisecond)
 			fmt.Println(r, args)
@@ -22,5 +22,14 @@ func main() {
 		q.Add(j)
 	}
 
-	q.Start()
+	q.Wait()
+	fmt.Println("wait end")
+
+	time.Sleep(time.Second)
+
+	q.Add(queue.NewJob(func(args ...interface{}) {
+		fmt.Println("hoge")
+	}))
+
+	q.Wait()
 }
