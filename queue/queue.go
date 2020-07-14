@@ -38,7 +38,7 @@ func (q *Queue) start() {
 	for {
 		select {
 		case <-q.ctx.Done():
-			q.wg.Done()
+			q.wg.Wait()
 			return
 
 		case j := <-q.jobs:
@@ -46,6 +46,10 @@ func (q *Queue) start() {
 				go func(job *Job) {
 					defer q.wg.Done()
 					job.Handler(job.Args...)
+
+					if q.ctx.Err() != nil {
+						return
+					}
 
 					q.mu.Lock()
 					defer q.mu.Unlock()
@@ -55,6 +59,7 @@ func (q *Queue) start() {
 
 					j := q.queue[0]
 					q.queue = q.queue[1:]
+					q.wg.Add(1)
 					q.jobs <- j
 				}(j)
 			}()
@@ -69,8 +74,8 @@ func (q *Queue) Add(job *Job) {
 
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	q.wg.Add(1)
 	if len(q.jobs) < cap(q.jobs) {
+		q.wg.Add(1)
 		q.jobs <- job
 	} else {
 		q.queue = append(q.queue, job)

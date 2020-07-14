@@ -5,8 +5,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/progfay/go-job-queue/queue"
 	"github.com/progfay/go-job-queue/job"
+	"github.com/progfay/go-job-queue/queue"
 )
 
 func main() {
@@ -15,18 +15,21 @@ func main() {
 
 	for i := 0; i < 100; i++ {
 		j := job.NewJob(func(args ...interface{}) {
-			fmt.Println("start", args)
+			fmt.Println("start:", args[0])
 			r := rand.Intn(1000)
 			time.Sleep(time.Duration(r) * time.Millisecond)
-			fmt.Println(r, args)
+			fmt.Println("end  :", args[0])
 		}, i)
 		q.Add(j)
 	}
 
-	q.Wait()
-	fmt.Println("wait end")
+	// q.Wait()
+	// fmt.Println("wait end")
 
-	time.Sleep(time.Second)
+	time.Sleep(time.Second * 1)
+	q.Stop()
+
+	time.Sleep(time.Second * 1)
 
 	q.Add(job.NewJob(func(args ...interface{}) {
 		fmt.Println("hoge")
