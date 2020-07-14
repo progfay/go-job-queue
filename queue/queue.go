@@ -3,9 +3,11 @@ package queue
 import (
 	"context"
 	"sync"
-
-	. "github.com/progfay/go-job-queue/job"
 )
+
+type Job interface {
+	Run(ctx context.Context)
+}
 
 type Queue struct {
 	jobs   chan *Job
@@ -45,7 +47,7 @@ func (q *Queue) start() {
 			func() {
 				go func(job *Job) {
 					defer q.wg.Done()
-					job.Handler(job.Args...)
+					(*job).Run(q.ctx)
 
 					if q.ctx.Err() != nil {
 						return
@@ -67,7 +69,7 @@ func (q *Queue) start() {
 	}
 }
 
-func (q *Queue) Add(job *Job) {
+func (q *Queue) Add(job Job) {
 	if q.ctx.Err() != nil {
 		return
 	}
@@ -76,9 +78,9 @@ func (q *Queue) Add(job *Job) {
 	defer q.mu.Unlock()
 	if len(q.jobs) < cap(q.jobs) {
 		q.wg.Add(1)
-		q.jobs <- job
+		q.jobs <- &job
 	} else {
-		q.queue = append(q.queue, job)
+		q.queue = append(q.queue, &job)
 	}
 }
 
