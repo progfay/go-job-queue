@@ -3,19 +3,9 @@ package queue
 import (
 	"context"
 	"sync"
+
+	. "github.com/progfay/go-job-queue/job"
 )
-
-type Job struct {
-	handler func(...interface{})
-	args    []interface{}
-}
-
-func NewJob(handler func(...interface{}), args ...interface{}) *Job {
-	return &Job{
-		handler: handler,
-		args:    args,
-	}
-}
 
 type Queue struct {
 	jobs   chan *Job
@@ -55,7 +45,8 @@ func (q *Queue) start() {
 			func() {
 				go func(job *Job) {
 					defer q.wg.Done()
-					job.handler(job.args...)
+					job.Handler(job.Args...)
+
 					q.mu.Lock()
 					defer q.mu.Unlock()
 					if len(q.queue) == 0 {
