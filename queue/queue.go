@@ -29,9 +29,8 @@ func NewQueue(maxJobCount int) *Queue {
 		ctx:    ctx,
 		cancel: cancel,
 	}
-	defer func() {
-		go q.start()
-	}()
+
+	go q.start()
 
 	return q
 }
@@ -44,27 +43,24 @@ func (q *Queue) start() {
 			return
 
 		case j := <-q.jobs:
-			func() {
-				go func(job *Job) {
-					defer q.wg.Done()
-					(*job).Run(q.ctx)
+			go func(job *Job) {
+				defer q.wg.Done()
+				(*job).Run(q.ctx)
 
-					if q.ctx.Err() != nil {
-						return
-					}
+				if q.ctx.Err() != nil {
+					return
+				}
 
-					q.mu.Lock()
-					defer q.mu.Unlock()
-					if len(q.queue) == 0 {
-						return
-					}
+				q.mu.Lock()
+				defer q.mu.Unlock()
+				if len(q.queue) == 0 {
+					return
+				}
 
-					j := q.queue[0]
-					q.queue = q.queue[1:]
-					q.wg.Add(1)
-					q.jobs <- j
-				}(j)
-			}()
+				q.wg.Add(1)
+				q.jobs <- q.queue[0]
+				q.queue = q.queue[1:]
+			}(j)
 		}
 	}
 }
