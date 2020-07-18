@@ -1,3 +1,3 @@
-module github.com/progfay/go-job-queue
+module github.com/progfay/jobqueue
 
 go 1.14
