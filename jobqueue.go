@@ -76,7 +76,7 @@ func (q *Queue) start() {
 	}
 }
 
-func (q *Queue) Add(job Job) {
+func (q *Queue) Enqueue(job Job) {
 	if q.ctx.Err() != nil {
 		return
 	}

@@ -38,7 +38,7 @@ func TestJobQueue(t *testing.T) {
 		var doneMap sync.Map
 
 		for i := 0; i < jobCount; i++ {
-			q.Add(&SleepJob{
+			q.Enqueue(&SleepJob{
 				id:      i,
 				sleep:   time.Duration(rand.Intn(10)) * time.Millisecond,
 				doneMap: &doneMap,
@@ -59,7 +59,7 @@ func TestJobQueue(t *testing.T) {
 
 		var doneMap sync.Map
 
-		q.Add(&SleepJob{
+		q.Enqueue(&SleepJob{
 			id:      0,
 			sleep:   50 * time.Millisecond,
 			doneMap: &doneMap,
@@ -67,7 +67,7 @@ func TestJobQueue(t *testing.T) {
 
 		q.Stop()
 
-		q.Add(&SleepJob{
+		q.Enqueue(&SleepJob{
 			id:      1,
 			sleep:   50 * time.Millisecond,
 			doneMap: &doneMap,
@@ -86,7 +86,7 @@ func TestJobQueue(t *testing.T) {
 
 		var doneMap sync.Map
 
-		q.Add(&SleepJob{
+		q.Enqueue(&SleepJob{
 			id:      0,
 			sleep:   10 * time.Millisecond,
 			doneMap: &doneMap,
@@ -95,7 +95,7 @@ func TestJobQueue(t *testing.T) {
 		cancel()
 		q.Wait()
 
-		q.Add(&SleepJob{
+		q.Enqueue(&SleepJob{
 			id:      1,
 			sleep:   10 * time.Millisecond,
 			doneMap: &doneMap,
