@@ -19,15 +19,15 @@ type Queue struct {
 	end    chan int
 }
 
-func NewQueue(maxJobCount int) *Queue {
-	return WithContext(context.Background(), maxJobCount)
+func NewQueue(workerCount int) *Queue {
+	return WithContext(context.Background(), workerCount)
 }
 
-func WithContext(ctx context.Context, maxJobCount int) *Queue {
+func WithContext(ctx context.Context, workerCount int) *Queue {
 	childCtx, cancel := context.WithCancel(ctx)
 
 	q := &Queue{
-		jobs:   make(chan *Job, maxJobCount),
+		jobs:   make(chan *Job, workerCount),
 		queue:  []*Job{},
 		mu:     &sync.Mutex{},
 		wg:     &sync.WaitGroup{},
