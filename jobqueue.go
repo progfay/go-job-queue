@@ -16,6 +16,7 @@ type Queue struct {
 	wg     *sync.WaitGroup
 	ctx    context.Context
 	cancel func()
+	end    chan int
 }
 
 func NewQueue(maxJobCount int) *Queue {
@@ -32,6 +33,7 @@ func WithContext(ctx context.Context, maxJobCount int) *Queue {
 		wg:     &sync.WaitGroup{},
 		ctx:    childCtx,
 		cancel: cancel,
+		end:    make(chan int, 1),
 	}
 
 	go q.start()
@@ -39,18 +41,23 @@ func WithContext(ctx context.Context, maxJobCount int) *Queue {
 	return q
 }
 
+func (q *Queue) runJob(job *Job) {
+	defer q.wg.Done()
+	(*job).Run(q.ctx)
+}
+
 func (q *Queue) start() {
 	for {
 		select {
 		case <-q.ctx.Done():
+			q.wg.Add(-len(q.jobs))
 			q.wg.Wait()
+			q.end <- 1
 			return
 
 		case j := <-q.jobs:
 			go func(job *Job) {
-				defer q.wg.Done()
-				(*job).Run(q.ctx)
-
+				q.runJob(job)
 				if q.ctx.Err() != nil {
 					return
 				}
@@ -90,4 +97,5 @@ func (q *Queue) Wait() {
 
 func (q *Queue) Stop() {
 	q.cancel()
+	<-q.end
 }
