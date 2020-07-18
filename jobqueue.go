@@ -41,11 +41,6 @@ func WithContext(ctx context.Context, workerCount int) *Queue {
 	return q
 }
 
-func (q *Queue) runJob(job *Job) {
-	defer q.wg.Done()
-	(*job).Run(q.ctx)
-}
-
 func (q *Queue) start() {
 	for {
 		select {
@@ -57,7 +52,8 @@ func (q *Queue) start() {
 
 		case j := <-q.jobs:
 			go func(job *Job) {
-				q.runJob(job)
+				defer q.wg.Done()
+				(*job).Run(q.ctx)
 				if q.ctx.Err() != nil {
 					return
 				}
