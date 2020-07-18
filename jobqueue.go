@@ -5,10 +5,12 @@ import (
 	"sync"
 )
 
+// Job is interface of instance to stored and executed by Queue
 type Job interface {
 	Run(ctx context.Context)
 }
 
+// Queue is scheduler that store and execute jobs
 type Queue struct {
 	jobs   chan *Job
 	queue  []*Job
@@ -19,10 +21,12 @@ type Queue struct {
 	end    chan int
 }
 
+// NewQueue create queue instance and start job scheduling
 func NewQueue(workerCount int) *Queue {
 	return WithContext(context.Background(), workerCount)
 }
 
+// WithContext create queue instance controlled with ctx and start job scheduling
 func WithContext(ctx context.Context, workerCount int) *Queue {
 	childCtx, cancel := context.WithCancel(ctx)
 
@@ -72,6 +76,7 @@ func (q *Queue) start() {
 	}
 }
 
+// Enqueue add job to queue's pool
 func (q *Queue) Enqueue(job Job) {
 	if q.ctx.Err() != nil {
 		return
@@ -87,10 +92,12 @@ func (q *Queue) Enqueue(job Job) {
 	}
 }
 
+// Wait wait for all jobs in the queue to finish executing
 func (q *Queue) Wait() {
 	q.wg.Wait()
 }
 
+// Stop stop queue running gracefully
 func (q *Queue) Stop() {
 	q.cancel()
 	<-q.end
