@@ -13,7 +13,7 @@ type Job interface {
 // Queue is scheduler that store and execute jobs
 type Queue struct {
 	jobs   chan *Job
-	queue  []*Job
+	pool  []*Job
 	mu     *sync.Mutex
 	wg     *sync.WaitGroup
 	ctx    context.Context
@@ -32,7 +32,7 @@ func WithContext(ctx context.Context, workerCount int) *Queue {
 
 	q := &Queue{
 		jobs:   make(chan *Job, workerCount),
-		queue:  []*Job{},
+		pool:  []*Job{},
 		mu:     &sync.Mutex{},
 		wg:     &sync.WaitGroup{},
 		ctx:    childCtx,
@@ -64,13 +64,13 @@ func (q *Queue) start() {
 
 				q.mu.Lock()
 				defer q.mu.Unlock()
-				if len(q.queue) == 0 {
+				if len(q.pool) == 0 {
 					return
 				}
 
 				q.wg.Add(1)
-				q.jobs <- q.queue[0]
-				q.queue = q.queue[1:]
+				q.jobs <- q.pool[0]
+				q.pool = q.pool[1:]
 			}(j)
 		}
 	}
@@ -88,7 +88,7 @@ func (q *Queue) Enqueue(job Job) {
 		q.wg.Add(1)
 		q.jobs <- &job
 	} else {
-		q.queue = append(q.queue, &job)
+		q.pool = append(q.pool, &job)
 	}
 }
 
