@@ -31,7 +31,7 @@ func WithContext(ctx context.Context, workerCount int) *Queue {
 	childCtx, cancel := context.WithCancel(ctx)
 
 	q := &Queue{
-		ready:   make(chan *Job, workerCount),
+		ready:  make(chan *Job, workerCount),
 		pool:   []*Job{},
 		mu:     &sync.Mutex{},
 		wg:     &sync.WaitGroup{},
@@ -50,6 +50,8 @@ func (q *Queue) start() {
 		select {
 		case <-q.ctx.Done():
 			q.wg.Add(-len(q.ready))
+			q.ready = nil
+			q.pool = nil
 			q.wg.Wait()
 			q.end <- 1
 			return
