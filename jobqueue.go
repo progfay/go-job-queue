@@ -12,8 +12,8 @@ type Job interface {
 
 // Queue is scheduler that store and execute jobs
 type Queue struct {
-	jobs   chan *Job
-	pool  []*Job
+	ready  chan *Job
+	pool   []*Job
 	mu     *sync.Mutex
 	wg     *sync.WaitGroup
 	ctx    context.Context
@@ -31,8 +31,8 @@ func WithContext(ctx context.Context, workerCount int) *Queue {
 	childCtx, cancel := context.WithCancel(ctx)
 
 	q := &Queue{
-		jobs:   make(chan *Job, workerCount),
-		pool:  []*Job{},
+		ready:   make(chan *Job, workerCount),
+		pool:   []*Job{},
 		mu:     &sync.Mutex{},
 		wg:     &sync.WaitGroup{},
 		ctx:    childCtx,
@@ -49,12 +49,12 @@ func (q *Queue) start() {
 	for {
 		select {
 		case <-q.ctx.Done():
-			q.wg.Add(-len(q.jobs))
+			q.wg.Add(-len(q.ready))
 			q.wg.Wait()
 			q.end <- 1
 			return
 
-		case j := <-q.jobs:
+		case j := <-q.ready:
 			go func(job *Job) {
 				defer q.wg.Done()
 				(*job).Run(q.ctx)
@@ -69,7 +69,7 @@ func (q *Queue) start() {
 				}
 
 				q.wg.Add(1)
-				q.jobs <- q.pool[0]
+				q.ready <- q.pool[0]
 				q.pool = q.pool[1:]
 			}(j)
 		}
@@ -84,9 +84,9 @@ func (q *Queue) Enqueue(job Job) {
 
 	q.mu.Lock()
 	defer q.mu.Unlock()
-	if len(q.jobs) < cap(q.jobs) {
+	if len(q.ready) < cap(q.ready) {
 		q.wg.Add(1)
-		q.jobs <- &job
+		q.ready <- &job
 	} else {
 		q.pool = append(q.pool, &job)
 	}
