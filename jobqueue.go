@@ -96,11 +96,19 @@ func (q *Queue) Enqueue(job Job) {
 
 // Wait wait for all jobs in the queue to finish executing
 func (q *Queue) Wait() {
+	if q.ctx.Err() != nil {
+		return
+	}
+
 	q.wg.Wait()
 }
 
 // Stop stop queue running gracefully
 func (q *Queue) Stop() {
+	if q.ctx.Err() != nil {
+		return
+	}
+
 	q.cancel()
 	<-q.end
 }
