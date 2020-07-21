@@ -28,7 +28,7 @@ func (sj *SleepJob) Run(ctx context.Context) {
 	sj.doneMap.Store(sj.id, true)
 }
 
-func TestJobQueue(t *testing.T) {
+func TestJobQueue_Wait(t *testing.T) {
 	t.Run("Queue.Wait should wait all enqueued jobs", func(t *testing.T) {
 		jobCount := 50
 
@@ -53,7 +53,9 @@ func TestJobQueue(t *testing.T) {
 			}
 		}
 	})
+}
 
+func TestJobQueue_Stop(t *testing.T) {
 	t.Run("Queue.Stop should stop queue immediately", func(t *testing.T) {
 		q := jobqueue.NewQueue(1)
 
@@ -77,7 +79,9 @@ func TestJobQueue(t *testing.T) {
 			t.Errorf("Job enqueued to queue that is stopped is running")
 		}
 	})
+}
 
+func TestJobQueue_WithContext(t *testing.T) {
 	t.Run("Queue.WithContext should return contexted job queue", func(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 
