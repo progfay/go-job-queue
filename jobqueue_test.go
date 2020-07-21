@@ -76,7 +76,7 @@ func TestJobQueue_Stop(t *testing.T) {
 		})
 
 		if _, ok := doneMap.Load(1); ok == true {
-			t.Errorf("Job enqueued to queue that is stopped is running")
+			t.Error("Job enqueued to queue that is stopped is running")
 		}
 	})
 
@@ -126,7 +126,7 @@ func TestJobQueue_WithContext(t *testing.T) {
 		})
 
 		if _, ok := doneMap.Load(1); ok == true {
-			t.Errorf("Job enqueued to queue whose context is cancelled is running")
+			t.Error("Job enqueued to queue whose context is cancelled is running")
 		}
 	})
 }
