@@ -79,6 +79,26 @@ func TestJobQueue_Stop(t *testing.T) {
 			t.Errorf("Job enqueued to queue that is stopped is running")
 		}
 	})
+
+	t.Run("No lock twice call of Queue.Stop", func(t *testing.T) {
+		timer := time.NewTimer(time.Second)
+		done := make(chan bool)
+
+		go func() {
+			q := jobqueue.NewQueue(1)
+
+			q.Stop()
+			q.Stop()
+			done <- true
+		}()
+
+		select {
+		case <-done:
+			timer.Stop()
+		case <-timer.C:
+			t.Error("Timeout Queue.Stop")
+		}
+	})
 }
 
 func TestJobQueue_WithContext(t *testing.T) {
