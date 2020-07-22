@@ -69,7 +69,7 @@ func TestJobQueue_Wait(t *testing.T) {
 
 		for i := 0; i < jobCount; i++ {
 			if done, ok := doneMap.Load(i); ok != true || done.(bool) != true {
-				t.Fail()
+				t.Error("Unfinished job exists")
 			}
 		}
 	})
