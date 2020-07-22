@@ -28,6 +28,26 @@ func (sj *SleepJob) Run(ctx context.Context) {
 	sj.doneMap.Store(sj.id, true)
 }
 
+func TestJobQueue_Enqueue(t *testing.T) {
+	t.Run("Ignore Queue.Enqueue for stopped queue", func(t *testing.T) {
+		q := jobqueue.NewQueue(5)
+		q.Stop()
+
+		var doneMap sync.Map
+
+		q.Enqueue(&SleepJob{
+			id:      0,
+			sleep:   0,
+			doneMap: &doneMap,
+		})
+		q.Wait()
+
+		if _, ok := doneMap.Load(0); ok {
+			t.Error("Job has been enqueued to stopped Queue")
+		}
+	})
+}
+
 func TestJobQueue_Wait(t *testing.T) {
 	t.Run("Queue.Wait should wait all enqueued jobs", func(t *testing.T) {
 		jobCount := 50
